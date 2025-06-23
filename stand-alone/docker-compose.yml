@@ -1,0 +1,104 @@
+services:
+
+# API Gateway
+  nginx:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nginx:1.28.0
+    container_name: nginx
+    privileged: true
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    restart: unless-stopped
+    networks:
+      - demo_network
+
+# Streaming and Messaging
+# TODO: persistence for emqx
+  emqx:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/emqx/emqx-enterprise:5.9.0
+    container_name: emqx
+    restart: always
+    privileged: true
+    volumes:
+      - emqx_data:/opt/emqx/data
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    environment:
+      - EMQX_NODE_NAME=emqx@localhost
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_DASHBOARD__DEFAULT_USERNAME=admin
+      - EMQX_DASHBOARD__DEFAULT_PASSWORD=password@123
+    networks:
+      - demo_network
+
+
+# Database
+# TODO: persistence for emqx
+  redis:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2.4
+    container_name: redis
+    privileged: true
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - demo_network
+
+
+# Observability
+  prometheus:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/quay.io/prometheus/prometheus:v2.53.0
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - demo_network
+
+  grafana:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/grafana/grafana:11.2.0
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    networks:
+      - demo_network
+
+  node-exporter:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+    networks:
+      - demo_network
+
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  emqx_data:
+
+networks:
+  demo_network:
+    driver: bridge
