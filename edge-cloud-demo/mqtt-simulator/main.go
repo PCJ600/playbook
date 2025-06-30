@@ -17,8 +17,8 @@ import (
 const (
 	EMQX_SERVER      = "tcp://emqx:1883"
 	BASE_TOPIC       = "device/%s/telemetry"
-	PUBLISH_INTERVAL = 6 * time.Second
-	SIMULATED_DEVICES = 1
+	PUBLISH_INTERVAL = 5 * time.Second
+	SIMULATED_DEVICES = 10
 	MAX_RETRIES      = 3
 	KEEPALIVE        = 120
 	LOG_FILE         = "emqx_simulator.log" // 日志文件路径
@@ -51,7 +51,6 @@ func NewDeviceSimulator(deviceID string) *DeviceSimulator {
 	opts.SetDefaultPublishHandler(func(client mqtt.Client, msg mqtt.Message) {
 		log.Printf("Received message: %s\n", msg.Payload())
 	})
-	opts.SetWill(fmt.Sprintf("device/%s/status", deviceID), "offline", 1, true)
 
 	return &DeviceSimulator{
 		deviceID: deviceID,
@@ -65,10 +64,6 @@ func (d *DeviceSimulator) Connect(logger *log.Logger) error {
 	token := d.client.Connect()
 	if token.Wait() && token.Error() != nil {
 		return token.Error()
-	}
-	token = d.client.Publish(fmt.Sprintf("device/%s/status", d.deviceID), 1, true, "online")
-	if token.Wait() && token.Error() != nil {
-		logger.Printf("设备 %s 发布在线状态失败: %v", d.deviceID, token.Error())
 	}
 	logger.Printf("设备 %s 连接成功", d.deviceID)
 	return nil
