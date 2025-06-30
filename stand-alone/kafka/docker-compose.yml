@@ -1,0 +1,30 @@
+services:
+  kafka:
+    image: bitnami/kafka:4.0.0
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # --- KRaft 模式核心配置 ---
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker  # 单节点同时担任controller和broker
+      - KAFKA_CFG_NODE_ID=1  # 节点ID
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@localhost:9093  # 控制器通信地址
+
+      # 监听器配置
+      - KAFKA_CFG_LISTENERS=SASL_PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093  # 监听所有网卡的9092端口
+      - KAFKA_CFG_ADVERTISED_LISTENERS=SASL_PLAINTEXT://localhost:9092  # 客户端连接的地址
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER  # 控制器监听器名称
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT  # 协议映射
+
+      # SASL认证
+      - KAFKA_CFG_SASL_ENABLED_MECHANISMS=PLAIN
+      - KAFKA_CFG_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="devuser" password="devpass";
+    volumes:
+      - kafka_data:/bitnami/kafka  # 数据持久化
+
+volumes:
+  kafka_data:
+
+networks:
+  kafka-net:
+    driver: bridge
