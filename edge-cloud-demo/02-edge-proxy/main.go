@@ -72,7 +72,7 @@ func processMessage(msg mqtt.Message) {
 		log.Error().Str("device", deviceID).Err(err).Msg("Kafka写入失败")
         return
 	}
-    // log.Printf("已投递到Kafka [device:%s]", deviceID)
+    log.Printf("已投递到Kafka [device:%s]", deviceID)
 }
 
 func startWorkers(ctx context.Context) {
