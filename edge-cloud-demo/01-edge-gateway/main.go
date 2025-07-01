@@ -103,7 +103,7 @@ func (d *DeviceSimulator) Run(wg *sync.WaitGroup) {
 			log.Printf("设备 %s 发布数据失败: %v", d.deviceID, token.Error())
 			continue
 		}
-		log.Printf("设备 %s 发布数据: %s", d.deviceID, string(payload))
+		// log.Printf("设备 %s 发布数据: %s", d.deviceID, string(payload))
         time.Sleep(PUBLISH_INTERVAL)
 	}
 }
