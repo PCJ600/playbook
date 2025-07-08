@@ -4,21 +4,25 @@ services:
     container_name: emqx
     restart: always
     privileged: true
+    hostname: emqx-node
     volumes:
       - emqx_data:/opt/emqx/data
     ports:
       - "1883:1883"
       - "18083:18083"
     environment:
-      - EMQX_NODE_NAME=emqx@localhost
+      - EMQX_NODE__NAME=emqx@emqx-node
       - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
       - EMQX_DASHBOARD__DEFAULT_USERNAME=admin
       - EMQX_DASHBOARD__DEFAULT_PASSWORD=password@123
       - EMQX_SESSION_PERSISTENCE_ENABLED=true
       - EMQX_SESSION_PERSISTENCE_STORAGE=disc
       - EMQX_SESSION_PERSISTENCE_MAX_RETAINED_MESSAGES=1000000  # 限制保留消息数
+      - EMQX_NAME=emqx
+      - EMQX_HOST=emqx-node
     networks:
       - demo_network
+
 
 volumes:
   emqx_data:

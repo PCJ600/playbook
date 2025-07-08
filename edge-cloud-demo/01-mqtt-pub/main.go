@@ -17,8 +17,8 @@ import (
 const (
 	EMQX_SERVER      = "tcp://emqx:1883"
 	BASE_TOPIC       = "device/%s/telemetry"
-	PUBLISH_INTERVAL = 1 * time.Second
-	SIMULATED_DEVICES = 5000
+	PUBLISH_INTERVAL = 500 * time.Millisecond
+	SIMULATED_DEVICES = 10000
 	MAX_RETRIES      = 3
 	KEEPALIVE        = 120
 )
