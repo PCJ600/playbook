@@ -3,22 +3,21 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+    "flag"
 	"log"
 	"math/rand"
 	"os"
 	"os/signal"
-	"sync"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-// === 配置区 ===
+// === 配置区 === time.Millisecond
 const (
-	EMQX_SERVER      = "tcp://emqx:1883"
+	EMQX_SERVER      = "tcp://peter.emqx.dev:1883"
 	BASE_TOPIC       = "device/%s/telemetry"
-	PUBLISH_INTERVAL = 500 * time.Millisecond
-	SIMULATED_DEVICES = 10000
+	PUBLISH_INTERVAL = 1 * time.Second
 	MAX_RETRIES      = 3
 	KEEPALIVE        = 120
 )
@@ -75,8 +74,7 @@ func (d *DeviceSimulator) GenerateTelemetry() map[string]interface{} {
 }
 
 // Run 启动设备模拟
-func (d *DeviceSimulator) Run(wg *sync.WaitGroup) {
-	defer wg.Done()
+func (d *DeviceSimulator) Run() {
 
 	retryCount := 0
 	for {
@@ -109,16 +107,31 @@ func (d *DeviceSimulator) Run(wg *sync.WaitGroup) {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+    // deviceID := 1
+    // flag.IntVar(&deviceID, "device_id", 0, "Device ID (1-10000, default: 1)")
+    // flag.Parse()
 
-	var wg sync.WaitGroup
-	wg.Add(SIMULATED_DEVICES)
+    // if deviceID < 1 || deviceID > 10000 {
+    //     fmt.Println("Error: device_id must be between 1 and 10000")
+    //     os.Exit(1)
+    // }
 
-	for i := 1; i <= SIMULATED_DEVICES; i++ {
-		simulator := NewDeviceSimulator(fmt.Sprintf("%d", i))
-		go simulator.Run(&wg)
-        time.Sleep(time.Duration(10) * time.Microsecond)
-	}
+    devicesNum := 1
+    flag.IntVar(&devicesNum, "devices_num", 1, "Devices num (1-10000, default: 1)")
+    flag.Parse()
+
+    if devicesNum < 1 || devicesNum > 10000 {
+        fmt.Println("Error: devices_num must be between 1 and 10000")
+        os.Exit(1)
+    }
+
+    for i := 1; i <= devicesNum; i++ {
+	    simulator := NewDeviceSimulator(fmt.Sprintf("%d", i))
+	    go simulator.Run()
+        if i % 100 == 0 {
+            time.Sleep(100 * time.Millisecond)
+        }
+    }
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)

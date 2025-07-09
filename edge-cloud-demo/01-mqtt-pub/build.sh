@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go build -o mqtt-sub .
+go build -o mqtt-pub .

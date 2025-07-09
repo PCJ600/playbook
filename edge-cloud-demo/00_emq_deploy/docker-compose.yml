@@ -2,30 +2,45 @@ services:
   emqx:
     image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/emqx/emqx-enterprise:5.9.0
     container_name: emqx
-    restart: always
-    privileged: true
-    hostname: emqx-node
-    volumes:
-      - emqx_data:/opt/emqx/data
+    hostname: peter.emqx.dev
     ports:
       - "1883:1883"
       - "18083:18083"
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_logs:/opt/emqx/log
     environment:
-      - EMQX_NODE__NAME=emqx@emqx-node
+      - EMQX_HOST=peter.emqx.dev
       - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
       - EMQX_DASHBOARD__DEFAULT_USERNAME=admin
       - EMQX_DASHBOARD__DEFAULT_PASSWORD=password@123
-      - EMQX_SESSION_PERSISTENCE_ENABLED=true
-      - EMQX_SESSION_PERSISTENCE_STORAGE=disc
-      - EMQX_SESSION_PERSISTENCE_MAX_RETAINED_MESSAGES=1000000  # 限制保留消息数
-      - EMQX_NAME=emqx
-      - EMQX_HOST=emqx-node
+    privileged: true
+    restart: on-failure:3
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx_ctl", "status"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+    sysctls:
+      net.core.somaxconn: 32768
+      net.ipv4.tcp_syncookies: 0
+      net.ipv4.tcp_max_syn_backlog: 16384
+      net.ipv4.tcp_max_tw_buckets: 1048576
+      net.ipv4.tcp_fin_timeout: 15
+      net.ipv4.ip_local_port_range: "1024 65535"
+    ulimits:
+      nproc: 1048576
+      nofile:
+        soft: 1048576
+        hard: 1048576
+      
     networks:
       - demo_network
 
-
 volumes:
   emqx_data:
+  emqx_logs:
 
 networks:
   demo_network:

@@ -18,13 +18,13 @@ import (
 const (
 	mqttClientID   = "mqtt-proxy"
 	kafkaTopicName = "device.telemetry"
-	workerCount    = 1
-	reconnectDelay = 5 * time.Second // 重连延迟时间
+	workerCount    = 4
+	reconnectDelay = 1 * time.Second // 重连延迟时间
 )
 
 var (
 	kafkaWriter *kafka.Writer
-	msgChan     = make(chan mqtt.Message, 1000)
+	msgChan     = make(chan mqtt.Message, 10000)
 	mqttClient  mqtt.Client
 	mqttMutex   sync.Mutex
 )
@@ -76,7 +76,7 @@ func processMessage(msg mqtt.Message) {
 		log.Error().Str("device", deviceID).Err(err).Msg("Kafka写入失败")
 		return
 	}
-	log.Info().Str("device", deviceID).Msg("已投递到Kafka")
+	// log.Info().Str("device", deviceID).Msg("已投递到Kafka")
 }
 
 func startWorkers(ctx context.Context) {
@@ -97,7 +97,7 @@ func startWorkers(ctx context.Context) {
 // 创建MQTT客户端并设置回调
 func createMqttClient() mqtt.Client {
 	opts := mqtt.NewClientOptions().
-		AddBroker("tcp://emqx:1883").
+		AddBroker("tcp://peter.emqx.dev:1883").
 		SetClientID(mqttClientID).
 		SetCleanSession(false).
 		SetAutoReconnect(true). // 启用自动重连
